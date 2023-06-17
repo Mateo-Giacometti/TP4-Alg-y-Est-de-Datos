@@ -108,45 +108,69 @@ def find_connected_components(graph):
 
 # Ejercicio 2
 
-def find_shortest_path_to_all(graph, vetex_id: str):
-    # Inicializar las distancias de todos los nodos como infinito
-    distances = {vetex: float('inf') for vetex in graph.get_graph_elements()}
-    distances[vetex_id] = 0
-
+def find_shortest_path_to_all(graph, vertex_id: str):
+    # Inicializar el diccionario de resultados
+    results = {vertex: {'distance': float('inf'), 'path': []} for vertex in graph.get_graph_elements()}
+    results[vertex_id]['distance'] = 0
+    results[vertex_id]['path'] = [vertex_id]
+    
     # Inicializar el heap con el nodo de inicio
-    heap = [(0, vetex_id)]
+    heap = [(0, vertex_id)]
 
     while heap:
         # Obtener el nodo con la distancia mínima desde el heap
         current_distance, current_node = heapq.heappop(heap)
 
         # Si la distancia actual es mayor que la distancia almacenada, continuar al siguiente nodo
-        if current_distance > distances[current_node]:
+        if current_distance > results[current_node]['distance']:
             continue
 
-        # Actualizar las distancias de los nodos adyacentes
+        # Actualizar la distancia y la ruta de los nodos adyacentes
         for neighbor in graph.get_neighbors(current_node):
             weight = graph.get_edge_data(current_node, neighbor)
-            new_distance = distances[current_node] + len(weight)
-            if new_distance < distances[neighbor]:
-                distances[neighbor] = new_distance
+            new_distance = results[current_node]['distance'] + len(weight)
+            
+            if new_distance < results[neighbor]['distance']:
+                results[neighbor]['distance'] = new_distance
+                results[neighbor]['path'] = results[current_node]['path'] + [neighbor]
                 heapq.heappush(heap, (new_distance, neighbor))
 
-    return distances
+    return results
+
+# Ejercicio 3
+
+def find_shortest_path_between_vertices(graph, start_vertex, end_vertex):
+    short_paths = find_shortest_path_to_all(graph, start_vertex)
+    return short_paths[end_vertex]
 
 
-# Ejercicio 7
+# Ejercicio 4
+def average_separations(graph, graph_connected_component: str):
+    average_per_vertex = {}
+    total_average = 0
+    connected_component = find_connected_components(graph)[graph_connected_component]
+    for vertex in connected_component:
+        separations = find_shortest_path_to_all(graph, vertex)
+        separations = [separation['distance'] for separation in separations.values()]
+        separations = [separation for separation in separations if separation != float('inf')]
+        separations = sum(separations) / len(separations)
+        average_per_vertex[vertex] = separations
+        total_average += separations
+    total_average = total_average / len(connected_component)
+    return average_per_vertex, total_average
 
-# def average_separations(graph, related_components: list):
-
+        
 
 def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
     # graph.print_graph()
-    m = find_connected_components(graph)
-    # print(find_shortest_path_to_all(graph, 'nm11640793'))
-    # print(graph.get_edge_data('nm11640793', 'nm0098376'))
+    # m = find_connected_components(graph)
+    # coso = find_shortest_path_to_all(graph, 'nm7057284')
+    # print(coso['nm0888572'])
+    # print(find_shortest_path_between_vertices(graph, 'nm7057284', 'nm0888572'))
+    average_separations(graph, 'Component 1')
+
 
 
 if __name__ == '__main__':

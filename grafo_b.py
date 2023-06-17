@@ -145,7 +145,7 @@ def load_graph(movies_by_id, actors_by_movie, actor_names_by_id):
     :param movies_by_id: the movies data by id as dict
     :param actors_by_movie: the actors data by movie
     :param actor_names_by_id: the actors names by their ids
-    :return: a Graph Bipartite
+    :return: a Graph Bipartite with actors and movies vertices
     """
     graph = Bipartite_Graph()
     print("Loading graph")
@@ -196,7 +196,7 @@ def min_distance_to_all_vertices(graph, vertex_id):
         current_vertex, current_distance = queues.popleft()
         for movie in graph.get_neighbors(current_vertex):
             for neighbor in graph.get_neighbors(movie):
-                if distances[neighbor] == float('inf'):  # Unvisited actor
+                if distances[neighbor] == float('inf'):
                     distances[neighbor] = current_distance + 1
                     queues.append((neighbor, current_distance + 1))
     return distances
