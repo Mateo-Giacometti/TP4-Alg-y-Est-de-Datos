@@ -12,6 +12,9 @@ MOVIES_DATA_PATH = "./datasets/title-basics-f.tsv"
 ACTORS_DATA_PATH = "./datasets/title-principals-f.tsv"
 ACTORS_NAMES_PATH = "./datasets/name-basics-f.tsv"
 
+global Kevin_Bacon
+Kevin_Bacon = "nm0000102"  # Kevin Bacon's ID    
+
 class Bipartite_Graph:
     """
     Bipartite_Graph class
@@ -62,7 +65,7 @@ class Bipartite_Graph:
         else:
             return None
 
-   # Se borró edge_data()
+   # Se borró edge_data() al no ser util en un grafo sin pesos
 
     def print_graph(self) -> None:
         """
@@ -161,33 +164,75 @@ def load_graph(movies_by_id, actors_by_movie, actor_names_by_id):
     return graph
 
 
-# Ejercicio 1
+"""	
+Ejercicio 1
 
-def degree_of_separation(graph, vertex1, vertex2):
-    if not graph.vertex_exists(vertex1) or not graph.vertex_exists(vertex2):
-        return -1
-    if vertex1 == vertex2:
-        return 0
+Dados dos actores, queremos conocer su grado de separación. El grado de separación se define como la mínima cantidad de películas de distancia a la que se encuentran.
+
+"""
+
+def degree_of_separation(graph: Bipartite_Graph, vertex1: str, vertex2: str) -> float:
+    """	
+    Calculate the degree of separation between two vertices in the graph (minimum number of films away at which both are). 
+    
+    Parameters
+    ----------
+    graph : Bipartite_Graph
+        The graph to search
+    vertex1 : str
+        The first vertex's ID (where the search begins)
+    vertex2 : str
+        The second vertex's ID (where the search ends)
+
+    Returns
+    -------
+    float
+        The degree of separation between the two vertices (inf if they are not connected)
+    """
+    if not graph.vertex_exists(vertex1) or not graph.vertex_exists(vertex2): return float('inf')
+    if graph.get_vertex_type(vertex1) != 'actor' or graph.get_vertex_type(vertex2) != 'actor': return float('inf') # Preguntar si es necesario
+    if vertex1 == vertex2: return 0.0
     visited = set()
     queues = deque()
-    queues.append((vertex1, 0))
+    queues.append((vertex1, 0.0))
     while queues:
         current_vertex, current_distance = queues.popleft()
-        if current_vertex == vertex2:
-            return current_distance/2 # No cuentan los actores?
+        if current_vertex == vertex2: return current_distance/2 
         if current_vertex not in visited:
             visited.add(current_vertex)
             for neighbor in graph.get_neighbors(current_vertex):
-                queues.append((neighbor, current_distance + 1))
-    return -1
+                queues.append((neighbor, current_distance + 1.0))
+    return float('inf')
 
 
-# Ejercicio 2
+"""
+Ejercicio 2
 
-def min_distance_to_all_vertices(graph, vertex_id):
+Encuentre quien está a mayor grado de separación de Kevin Bacon en su componente conexa.
+
+"""
+
+def min_distance_to_all_vertices(graph: Bipartite_Graph, vertex_id: str) -> dict:
+    """
+    Calculate the minimum distance from a vertex to all the other vertices in the graph (minimum number of films away at which both are). 
+
+    Parameters
+    ----------
+    graph : Bipartite_Graph
+        The graph to search
+    vertex_id : str
+        The vertex's ID to search from
+
+    Returns
+    -------
+    dict
+        A dictionary with the minimum distance to all vertices in the graph
+    """
+    if not graph.vertex_exists(vertex_id): return {"The vertex does not exist" : float('inf')}
+    if graph.get_vertex_data(vertex_id)['type'] != "actor": return {"The vertex is not an actor" : float('inf')}
     distances = {}
     for vertex in graph.get_graph_elements():
-         if graph.get_vertex_data(vertex)['type'] == "actor":
+        if graph.get_vertex_data(vertex)['type'] == "actor":
             distances[vertex] = float('inf')
     distances[vertex_id] = 0
     queues = deque()
@@ -197,23 +242,35 @@ def min_distance_to_all_vertices(graph, vertex_id):
         for movie in graph.get_neighbors(current_vertex):
             for neighbor in graph.get_neighbors(movie):
                 if distances[neighbor] == float('inf'):
-                    distances[neighbor] = current_distance + 1
-                    queues.append((neighbor, current_distance + 1))
+                    distances[neighbor] = current_distance + 1.0
+                    queues.append((neighbor, current_distance + 1.0))
     return distances
 
 
-def min_bacon(graph):
-    bacons = []
-    min_dis = 1
-    distances = min_distance_to_all_vertices(graph, "nm0000102")
+def greatest_distance_to_Kevin_Bacon(graph: Bipartite_Graph) -> tuple: 
+    """
+    Calculate the greatest distance from Kevin Bacon to all the other actors in the graph (minimum number of films away at which both are).
+
+    Parameters
+    ----------
+    graph : Bipartite_Graph
+        The graph to search
+
+    Returns
+    -------
+    tuple
+        A tuple with the greatest distance and the actors with that distance
+    """
+    bacon_max_distance_actors = []  
+    max_distance = 0
+    distances = min_distance_to_all_vertices(graph, Kevin_Bacon)
     for actor in distances:
-        if distances[actor] > min_dis and distances[actor] != float('inf'):
-            bacons = []
-            min_dis = distances[actor]
-            bacons.append(actor)
-        elif distances[actor] == min_dis:
-            bacons.append(actor)
-    return bacons
+        if distances[actor] > max_distance and distances[actor] != float('inf'):
+            bacon_max_distance_actors = []
+            max_distance = distances[actor]
+            bacon_max_distance_actors.append(actor)
+        elif distances[actor] == max_distance: bacon_max_distance_actors.append(actor)
+    return max_distance, bacon_max_distance_actors
 
 
 def main():
@@ -221,13 +278,12 @@ def main():
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
     # graph.print_graph()
     # print(len(graph.get_graph_elements()))
-    print(degree_of_separation(graph, "nm0000102", "nm8311374"))
-    # print(find_the_biggest_bacon_number(graph))
+    # print(degree_of_separation(graph, 'nm2900398', 'nm1001351'))
 
-    pepe = min_distance_to_all_vertices(graph, "nm0000102")
-    print(pepe["nm8311374"])
+    # pepe = min_distance_to_all_vertices(graph, 'nm2900398')
+    # print(pepe['nm1001351'])
 
-    # print(min_bacon(graph))
+    print(greatest_distance_to_Kevin_Bacon(graph))
     
 
 if __name__ == '__main__':
