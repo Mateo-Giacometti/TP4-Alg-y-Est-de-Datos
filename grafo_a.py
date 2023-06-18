@@ -158,6 +158,7 @@ a) ¿Cuánto demoraría hacerlo de forma exacta?
 b) Estime el diámetro del grafo utilizando el tiempo dado
 
 """
+
 def find_diameter(graph, graph_connected_component: str):
     diameter = 0
     connected_component = find_connected_components(graph)[graph_connected_component]
@@ -216,10 +217,9 @@ def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
     m = find_connected_components(graph)
-    n = len(m)
     print(len(m["Component 1"]))
     print(len(m["Component 2"]))
-    print(len(m[f"Component {n}"]))
+    print(len(m[f"Component {len(m)}"]))
     # coso = find_shortest_path_to_all(graph, 'nm7057284')
     # print(coso['nm0888572'])
     # print(find_shortest_path_between_vertices(graph, 'nm7057284', 'nm0888572'))

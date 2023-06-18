@@ -81,18 +81,13 @@ def solve(grid):
 
     if is_full(grid):
         return grid
-
     x, y = find_empty_cell(grid)
-   
     for num in range(1, 10):
         if possible(grid, x, y, num):
             grid[x][y] = num
-
             if solve(grid):
                 return grid
-
             grid[x][y] = 0
-
     return None
 
 
