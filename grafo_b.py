@@ -4,7 +4,7 @@ from itertools import combinations
 from collections import deque
 import os
 import pickle
-from tqdm import tqdm
+import random
 MOVIE_TITLE_TYPE = "movie"
 MOVIE_COLUMNS = ["tconst", "titleType", "primaryTitle"]
 PRINCIPALS_COLUMNS = ["nconst", "category"]
@@ -161,6 +161,8 @@ def load_graph(movies_by_id, actors_by_movie, actor_names_by_id):
             if not graph.vertex_exists(actor_id):
                 graph.add_vertex(actor_id, "actor", actor_names_by_id.get(actor_id, "ERROR"))	
             graph.add_edge(movie_id, actor_id, movie_title)
+   
+    print("Graph loaded")
     return graph
 
 
@@ -190,7 +192,7 @@ def degree_of_separation(graph: Bipartite_Graph, vertex1: str, vertex2: str) -> 
         The degree of separation between the two vertices (inf if they are not connected)
     """
     if not graph.vertex_exists(vertex1) or not graph.vertex_exists(vertex2): return float('inf')
-    if graph.get_vertex_type(vertex1) != 'actor' or graph.get_vertex_type(vertex2) != 'actor': return float('inf') # Preguntar si es necesario
+    if graph.get_vertex_data(vertex1)["type"] != 'actor' or graph.get_vertex_data(vertex2)["type"]  != 'actor': return float('inf') # Preguntar si es necesario
     if vertex1 == vertex2: return 0.0
     visited = set()
     queues = deque()
@@ -259,7 +261,7 @@ def greatest_distance_to_Kevin_Bacon(graph: Bipartite_Graph) -> tuple:
     Returns
     -------
     tuple
-        A tuple with the greatest distance and the actors with that distance
+        A tuple with the greatest distance and a list with all the actors with that distance
     """
     bacon_max_distance_actors = []  
     max_distance = 0
@@ -273,18 +275,87 @@ def greatest_distance_to_Kevin_Bacon(graph: Bipartite_Graph) -> tuple:
     return max_distance, bacon_max_distance_actors
 
 
+"""	
+Ejercicio 3
+
+Por medio de random walks estime quienes son los vértices con mayor centralidad, diferenciando actores de películas. 
+
+"""	
+
+def estimate_central_vertices(graph: Bipartite_Graph, num_walks: int, walk_length: int) -> tuple: #Revisar por las duda, pero creo que esta bien
+    actor_counts = {}
+    movie_counts = {}
+    central_actors = []
+    central_movies = []
+    max_num_of_presences_actors = 0
+    max_num_of_presences_movies = 0
+    loop_control = 0
+    visited_vertices = []
+    vertices = list(graph.get_graph_elements().keys())
+    for _ in range(num_walks): 
+        vertex = random.choice(vertices)
+        visited_vertices.append(vertex)
+        if graph.get_vertex_data(vertex)['type'] == 'actor': 
+            if vertex not in actor_counts: actor_counts[vertex] = 1
+            else: actor_counts[vertex] += 1
+        elif graph.get_vertex_data(vertex)['type'] == 'movie':
+            if vertex not in movie_counts: movie_counts[vertex] = 1
+            else: movie_counts[vertex] += 1
+        for _ in range(walk_length):
+            neighbors = graph.get_neighbors(vertex)
+            if neighbors:
+                for _ in range(10):
+                    vertex = random.choice(neighbors)
+                    if vertex not in visited_vertices: break
+                    else: loop_control += 1
+                if loop_control == 10: 
+                    loop_control = 0
+                    break
+                elif graph.get_vertex_data(vertex)['type'] == 'actor': 
+                    if vertex not in actor_counts: actor_counts[vertex] = 1
+                    else: actor_counts[vertex] += 1
+                elif graph.get_vertex_data(vertex)['type'] == 'movie':
+                    if vertex not in movie_counts: movie_counts[vertex] = 1
+                    else: movie_counts[vertex] += 1
+                visited_vertices.append(vertex)
+                loop_control = 0
+            else: 
+                loop_control = 0
+                break  
+        visited_vertices = [] 
+    for actor in actor_counts:
+        if actor_counts[actor] > max_num_of_presences_actors: 
+            max_num_of_presences_actors = actor_counts[actor]
+            central_actors = []
+            central_actors.append(actor)
+        elif actor_counts[actor] == max_num_of_presences_actors: central_actors.append(actor)
+    for movie in movie_counts:
+        if movie_counts[movie] >  max_num_of_presences_movies: 
+            max_num_of_presences_movies = movie_counts[movie]
+            central_movies = []
+            central_movies.append(movie)
+        elif movie_counts[movie] ==  max_num_of_presences_movies: central_movies.append(movie)
+
+    return max_num_of_presences_actors, central_actors, max_num_of_presences_movies, central_movies
+      
+
 def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
-    # graph.print_graph()
-    # print(len(graph.get_graph_elements()))
-    # print(degree_of_separation(graph, 'nm2900398', 'nm1001351'))
+    # print("Graph loaded")
+    # print("Number of vertices:", len(graph._graph))
+    # print("Example of calculating the degree of separation between two actors")
+    # print(f"The degree of separation between {actor_names_by_id['nm2900398']} and {actor_names_by_id['nm1001351']} is {degree_of_separation(graph, 'nm2900398', 'nm1001351')}")
+    # print("Example of calculating the greatest distance to Kevin Bacon")
+    # KB_distance = greatest_distance_to_Kevin_Bacon(graph)
+    # print(f"The greatest distance to Kevin Bacon is {KB_distance[0]}")
+    # print(f"The actors with the greatest distance to Kevin Bacon are {len(KB_distance[1])}")
+    print("Example of estimating the central vertices")
+    central_vertices = estimate_central_vertices(graph, 500, 30)
+    print(central_vertices)
+    # print(f"The most central actors are {len(central_vertices['actors'])}")
+    # print(f"The most central movies are {len(central_vertices['movies'])}")
 
-    # pepe = min_distance_to_all_vertices(graph, 'nm2900398')
-    # print(pepe['nm1001351'])
-
-    print(greatest_distance_to_Kevin_Bacon(graph))
-    
 
 if __name__ == '__main__':
     main()
