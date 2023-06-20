@@ -180,16 +180,16 @@ def degree_of_separation(graph: Bipartite_Graph, vertex1: str, vertex2: str) -> 
     Parameters
     ----------
     graph : Bipartite_Graph
-        The graph to search
+        The graph to search.
     vertex1 : str
-        The first vertex's ID (where the search begins)
+        The first vertex's ID (where the search begins).
     vertex2 : str
-        The second vertex's ID (where the search ends)
+        The second vertex's ID (where the search ends).
 
     Returns
     -------
     float
-        The degree of separation between the two vertices (inf if they are not connected)
+        The degree of separation between the two vertices (inf if they are not connected).
     """
     if not graph.vertex_exists(vertex1) or not graph.vertex_exists(vertex2): return float('inf')
     if graph.get_vertex_data(vertex1)["type"] != 'actor' or graph.get_vertex_data(vertex2)["type"]  != 'actor': return float('inf') # Preguntar si es necesario
@@ -221,14 +221,14 @@ def min_distance_to_all_vertices(graph: Bipartite_Graph, vertex_id: str) -> dict
     Parameters
     ----------
     graph : Bipartite_Graph
-        The graph to search
+        The graph to search.
     vertex_id : str
-        The vertex's ID to search from
+        The vertex's ID to search from.
 
     Returns
     -------
     dict
-        A dictionary with the minimum distance to all vertices in the graph
+        A dictionary with the minimum distance to all vertices in the graph. The keys are the vertices' IDs and the values are the minimum distance to them.
     """
     if not graph.vertex_exists(vertex_id): return {"The vertex does not exist" : float('inf')}
     if graph.get_vertex_data(vertex_id)['type'] != "actor": return {"The vertex is not an actor" : float('inf')}
@@ -256,12 +256,12 @@ def greatest_distance_to_Kevin_Bacon(graph: Bipartite_Graph) -> tuple:
     Parameters
     ----------
     graph : Bipartite_Graph
-        The graph to search
+        The graph to search.
 
     Returns
     -------
     tuple
-        A tuple with the greatest distance and a list with all the actors with that distance
+        A tuple with the greatest distance and a list with all the actors with that distance.
     """
     bacon_max_distance_actors = []  
     max_distance = 0
@@ -282,7 +282,24 @@ Por medio de random walks estime quienes son los vértices con mayor centralidad
 
 """	
 
-def estimate_central_vertices(graph: Bipartite_Graph, num_walks: int, walk_length: int) -> tuple: #Revisar por las duda, pero creo que esta bien
+def estimate_central_vertices(graph: Bipartite_Graph, num_walks: int, walk_length: int) -> tuple:
+    """
+    Estimate the most central vertices in the graph by using random walks (differentiating actors and movies).
+
+    Parameters
+    ----------
+    graph : Bipartite_Graph
+        The graph to search.
+    num_walks : int
+        The number of random walks to perform.
+    walk_length : int
+        The length of each random walk.
+
+    Returns
+    -------
+    tuple
+        A tuple with the most central actors, and the number of times they appeared, the most central movies and the number of times they appeared.
+    """
     actor_counts = {}
     movie_counts = {}
     central_actors = []
@@ -335,26 +352,24 @@ def estimate_central_vertices(graph: Bipartite_Graph, num_walks: int, walk_lengt
             central_movies = []
             central_movies.append(movie)
         elif movie_counts[movie] ==  max_num_of_presences_movies: central_movies.append(movie)
-
     return max_num_of_presences_actors, central_actors, max_num_of_presences_movies, central_movies
       
 
 def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
-    # print("Graph loaded")
-    # print("Number of vertices:", len(graph._graph))
-    # print("Example of calculating the degree of separation between two actors")
-    # print(f"The degree of separation between {actor_names_by_id['nm2900398']} and {actor_names_by_id['nm1001351']} is {degree_of_separation(graph, 'nm2900398', 'nm1001351')}")
-    # print("Example of calculating the greatest distance to Kevin Bacon")
-    # KB_distance = greatest_distance_to_Kevin_Bacon(graph)
-    # print(f"The greatest distance to Kevin Bacon is {KB_distance[0]}")
-    # print(f"The actors with the greatest distance to Kevin Bacon are {len(KB_distance[1])}")
+    print("Graph loaded")
+    print("Number of vertices:", len(graph._graph))
+    print("Example of calculating the degree of separation between two actors")
+    print(f"The degree of separation between {actor_names_by_id['nm2900398']} and {actor_names_by_id['nm1001351']} is {degree_of_separation(graph, 'nm2900398', 'nm1001351')}")
+    print("Example of calculating the greatest distance to Kevin Bacon")
+    KB_distance = greatest_distance_to_Kevin_Bacon(graph)
+    print(f"The greatest distance to Kevin Bacon is {KB_distance[0]}")
+    print(f"The actors with the greatest distance to Kevin Bacon are {len(KB_distance[1])}")
     print("Example of estimating the central vertices")
-    central_vertices = estimate_central_vertices(graph, 500, 30)
-    print(central_vertices)
-    # print(f"The most central actors are {len(central_vertices['actors'])}")
-    # print(f"The most central movies are {len(central_vertices['movies'])}")
+    central_vertices = estimate_central_vertices(graph, 1000, 30)
+    print(f"The actors with the most centrality appear on average {central_vertices[0]} times and their IDs are {central_vertices[1]}")
+    print(f"The movies with the most centrality appear on average {central_vertices[2]} times and their IDs are {central_vertices[3]}")
 
 
 if __name__ == '__main__':

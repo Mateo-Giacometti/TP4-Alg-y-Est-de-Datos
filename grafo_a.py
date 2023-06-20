@@ -94,17 +94,17 @@ Una componente conexa se define como un subgrafo maximal conexo. ¿Cuántas comp
 
 def find_connected_components(graph: Graph) -> dict:
     """	
-    Finds the connected components of a graph
+    Finds the connected components of a graph.
 
     Parameters
     ----------
     graph : Graph
-        The graph to find the connected components
+        The graph to find the connected components.
     
     Returns
     -------
     dict
-        A dictionary with the format {component_id: [vertex1, vertex2, ...]}
+        A dictionary with the format {component_id: [vertex1, vertex2, ...]}.
     """
     visited = set()
     graph_components = []
@@ -135,19 +135,19 @@ Dado un artista, queremos conocer el camino mínimo (que sume la minima cantidad
 
 def find_shortest_path_to_all(graph: Graph, vertex_id: str) -> dict:
     """
-    Finds the shortest path from a vertex to all the other vertices in the graph
+    Finds the shortest path from a vertex to all the other vertices in the graph.
 
     Parameters
     ----------
     graph : Graph
-        The graph to find the shortest path
+        The graph to find the shortest path.
     vertex_id : str
-        The vertex to start the search from
+        The vertex to start the search from.
     
     Returns
     -------
     dict
-        A dictionary with the format {vertex: {'distance': distance, 'path': [vertex1, vertex2, ...]}}
+        A dictionary with the format {vertex_id: {'distance': distance, 'path': [vertex1, vertex2, ...]}}.
     """
     results = {vertex: {'distance': float('inf'), 'path': []} for vertex in graph.get_graph_elements()}
     results[vertex_id]['distance'] = 0
@@ -155,8 +155,7 @@ def find_shortest_path_to_all(graph: Graph, vertex_id: str) -> dict:
     heap = [(0, vertex_id)]
     while heap:
         current_distance, current_node = heapq.heappop(heap)
-        if current_distance > results[current_node]['distance']:
-            continue
+        if current_distance > results[current_node]['distance']: continue
         for neighbor in graph.get_neighbors(current_node):
             weight = graph.get_edge_data(current_node, neighbor)
             new_distance = results[current_node]['distance'] + len(weight)
@@ -173,30 +172,31 @@ Queremos conocer el camino minimo (con pesos) entre cualquier par de artistas. �
 
 """
 
-def find_shortest_path_between_vertices(graph: Graph, start_vertex: str, end_vertex: str) -> tuple:
+def find_shortest_path_between_vertices(graph: Graph, start_vertex: str, end_vertex: str) -> tuple: #Mirar documentación
     """
-    Finds the shortest path between two vertices
+    Finds the shortest path between two vertices.
 
     Parameters
     ----------
     graph : Graph
-        The graph to find the shortest path
+        The graph to find the shortest path.
     start_vertex : str
-        The vertex to start the search from
+        The vertex to start the search from.
     end_vertex : str
-        The vertex to end the search
+        The vertex to end the search.
 
     Returns
     -------
     tuple
-        A tuple with the format (distance, [vertex1, vertex2, ...])
+        A tuple with the format (distance, list with the vertices that make up the path, execution time).
+        
     """
     start_time = time.time()
     short_paths = find_shortest_path_to_all(graph, start_vertex)
     the_path = short_paths[end_vertex]
     end_time = time.time()
     elapsed_time = end_time - start_time
-    return the_path, elapsed_time
+    return the_path['distance'], the_path['path'], elapsed_time
 
 """
 Ejercicio 4
@@ -207,7 +207,22 @@ b) Estime el diámetro del grafo utilizando el tiempo dado
 
 """
 
-def find_shortest_path_to_all_without_weights(graph, vertex_id: str):
+def find_shortest_path_to_all_without_weights(graph: Graph, vertex_id: str) -> dict:
+    """
+    Finds the shortest path from a vertex to all the other vertices in the graph without considering the weights.
+
+    Parameters
+    ----------
+    graph : Graph
+        The graph to find the shortest path.
+    vertex_id : str
+        The vertex to start the search from.
+    
+    Returns
+    -------
+    dict
+        A dictionary with the format {vertex_id: {'distance': distance, 'path': [vertex1, vertex2, ...]}}.
+    """
     visited = set()
     results = {vertex: {'distance': float('inf'), 'path': []} for vertex in graph.get_graph_elements()}
     results[vertex_id]['distance'] = 0
@@ -215,8 +230,7 @@ def find_shortest_path_to_all_without_weights(graph, vertex_id: str):
     queue = deque([(vertex_id, 0)])
     while queue:
         current_node, current_distance = queue.popleft()
-        if current_node in visited:
-            continue
+        if current_node in visited: continue
         visited.add(current_node)
         for neighbor in graph.get_neighbors(current_node):
             new_distance = current_distance + 1
@@ -227,20 +241,42 @@ def find_shortest_path_to_all_without_weights(graph, vertex_id: str):
     return results
 
 
-def find_diameter(graph, graph_connected_component: str): #falta el tiempo
+def find_diameter(graph: Graph, graph_connected_component: str, execution_time: int = 900): 
+    """
+    Finds the diameter of a graph connected component (exact or approximate).
+
+    Parameters
+    ----------
+    graph : Graph
+        The graph to find the diameter.
+    graph_connected_component : str
+        The connected component to find the diameter.
+    execution_time : int
+        The time to find the diameter (default 900 seconds).
+    
+    Returns
+    -------
+    tuple
+        A tuple with the format (diameter of the connected component, total time, time to finish).
+    """
     diameter = 0
+    number_of_vertices_analyzed = 0
+    total_time = 0
+    time_to_finish = 0
     connected_component = find_connected_components(graph)[graph_connected_component]
     random.shuffle(connected_component)
     start_time = time.time()
     for vertex in connected_component:
-        if time.time() - start_time >= 20:  # Verificar si han transcurrido 15 minutos (900 segundos)
-            break
+        if time.time() - start_time >= execution_time: break
+        number_of_vertices_analyzed += 1
         separations = find_shortest_path_to_all_without_weights(graph, vertex)
-        separations = [separation['distance'] for separation in separations.values()]
-        separations = [separation for separation in separations if separation != float('inf')]
-        if max(separations) > diameter:
-            diameter = max(separations)
-    return diameter
+        for separation in separations.values():
+            if separation['distance'] == float('inf'): continue
+            if separation['distance'] > diameter: diameter = separation['distance']    
+    end_time = time.time()
+    total_time = len(connected_component)*((end_time - start_time)/number_of_vertices_analyzed)
+    time_to_finish = total_time - (end_time - start_time)
+    return diameter, total_time, time_to_finish
 
 """
 Ejercicio 5
@@ -249,49 +285,60 @@ Ejercicio 5
 
 """
 
-def average_separations(graph, graph_connected_component: str):
-    average_per_vertex = {}
-    total_average = 0
-    connected_component = find_connected_components(graph)[graph_connected_component]
-    random.shuffle(connected_component)
-    for vertex in connected_component:
-        separations = find_shortest_path_to_all_without_weights(graph, vertex)
-        separations = [separation['distance'] for separation in separations.values()]
-        separations = [separation for separation in separations if separation != float('inf')]
-        separations = sum(separations) / len(separations)
-        average_per_vertex[vertex] = separations
-        total_average += separations
-    total_average = total_average / len(connected_component)
-    return average_per_vertex, total_average
+def average_separations(graph: Graph, graph_connected_component: str, execution_time: int = 900) -> tuple:
+    """
+    Finds the average separations for each vertex and for all the vertices in the graph connected component.
 
-def estimated_average_separation(graph, graph_connected_component: str):
-    estimated_average_per_vertex = {}
-    estimated_total_average = 0
+    Parameters
+    ----------
+    graph : Graph
+        The graph to find the average separations.
+    graph_connected_component : str
+        The connected component to find the average separations.
+    execution_time : int
+        The time to find the average separations (default 900 seconds).
+
+    Returns
+    -------
+    tuple
+        A tuple with the format (average separations for each vertex, average separations for all the vertices, total time, time to finish).
+    """
+    number_of_vertices_analyzed = 0
+    total_time = 0
+    time_to_finish = 0
+    total_average = 0
+    average_per_vertex = {}
     connected_component = find_connected_components(graph)[graph_connected_component]
     random.shuffle(connected_component)
     start_time = time.time()
     for vertex in connected_component:
-        if time.time() - start_time >= 20:  # Verificar si han transcurrido 15 minutos (900 segundos)
-            break
+        if time.time() - start_time >= execution_time: break
+        number_of_vertices_analyzed += 1
+        vertex_separation = 0
         separations = find_shortest_path_to_all_without_weights(graph, vertex)
-        separations = [separation['distance'] for separation in separations.values()]
-        separations = [separation for separation in separations if separation != float('inf')]
-        separations = sum(separations) / len(separations)
-        estimated_average_per_vertex[vertex] = separations
-        estimated_total_average += separations
+        for separation in separations.values():
+            if separation['distance'] == float('inf'): continue
+            vertex_separation += separation['distance']
+        average_per_vertex[vertex] = vertex_separation / len(connected_component)
+        total_average += vertex_separation / len(connected_component)
+    end_time = time.time()
+    total_average = total_average / len(average_per_vertex)
+    total_time = len(connected_component)*((end_time - start_time)/number_of_vertices_analyzed)
+    time_to_finish = total_time - (end_time - start_time)
+    return average_per_vertex, total_average, total_time, time_to_finish
 
-    estimated_total_average = estimated_total_average / len(estimated_average_per_vertex)
-    return estimated_average_per_vertex, estimated_total_average
 
 
 def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
-    print("Calculation of connected components")
-    m = find_connected_components(graph)
-    print(f"The number of connected components is {len(m)}")
-    print(f"The largest connected component has {len(m['Component 1'])} vertices")
-    print(f"The second largest connected component has {len(m['Component 2'])} vertices")
+    # m = find_connected_components(graph)
+    # print(f"The number of connected components is {len(m)}")
+    # print(f"The largest connected component has {len(m['Component 1'])} vertices")
+    # print(f"The second largest connected component has {len(m['Component 2'])} vertices")
+    # print(f"The smallest connected components has {len(m[f'Component {len(m)}'])} vertices")
+    
+    
     # print(len(m["Component 2"]))
     # print(len(m[f"Component {len(m)}"]))
     # coso = find_shortest_path_to_all(graph, 'nm7057284')
@@ -299,8 +346,11 @@ def main():
     # coso1 = find_shortest_path_to_all_without_weights(graph, 'nm7057284')
     # print(coso1['nm0179132'])
     # print(find_shortest_path_between_vertices(graph, 'nm7057284', 'nm0888572'))
-    print(estimated_average_separation(graph, 'Component 1'))
-    # print(find_diameter(graph, 'Component 1'))
+    # print(average_separations(graph, 'Component 1', 50))
+    # print(find_diameter(graph, 'Component 1', 100))
+
+    # coso1 = find_shortest_path_to_all_without_weights(graph, 'nm11549950')
+    # print(coso1['nm8311374'])
 
 
 if __name__ == '__main__':
