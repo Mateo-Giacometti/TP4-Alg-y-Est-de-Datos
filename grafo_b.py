@@ -192,7 +192,7 @@ def degree_of_separation(graph: Bipartite_Graph, vertex1: str, vertex2: str) -> 
         The degree of separation between the two vertices (inf if they are not connected).
     """
     if not graph.vertex_exists(vertex1) or not graph.vertex_exists(vertex2): return float('inf')
-    if graph.get_vertex_data(vertex1)["type"] != 'actor' or graph.get_vertex_data(vertex2)["type"]  != 'actor': return float('inf') # Preguntar si es necesario
+    if graph.get_vertex_data(vertex1)["type"] != 'actor' or graph.get_vertex_data(vertex2)["type"]  != 'actor': return float('inf') 
     if vertex1 == vertex2: return 0.0
     visited = set()
     queues = deque()

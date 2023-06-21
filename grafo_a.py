@@ -172,7 +172,7 @@ Queremos conocer el camino minimo (con pesos) entre cualquier par de artistas. �
 
 """
 
-def find_shortest_path_between_vertices(graph: Graph, start_vertex: str, end_vertex: str) -> tuple: #Mirar documentación
+def find_shortest_path_between_vertices(graph: Graph, start_vertex: str, end_vertex: str) -> tuple: 
     """
     Finds the shortest path between two vertices.
 
@@ -241,7 +241,7 @@ def find_shortest_path_to_all_without_weights(graph: Graph, vertex_id: str) -> d
     return results
 
 
-def find_diameter(graph: Graph, graph_connected_component: str, execution_time: int = 900): 
+def find_diameter(graph: Graph, graph_connected_component: str, execution_time: int = 900) -> tuple: 
     """
     Finds the diameter of a graph connected component (exact or approximate).
 
@@ -327,30 +327,94 @@ def average_separations(graph: Graph, graph_connected_component: str, execution_
     time_to_finish = total_time - (end_time - start_time)
     return average_per_vertex, total_average, total_time, time_to_finish
 
+"""
+Ejercicio 6
 
+¿Quienes son los actores con más betweenness centrality? 
+
+"""
+
+def betweenness_centrality(graph: Graph, execution_time: int = 900) -> tuple:
+    """
+    Finds the vertices with the most betweenness_centrality.
+
+    Parameters
+    ----------
+    graph : Graph
+        The graph to find the vertices with the most betweenness_centrality.
+    execution_time : int
+        The time to find the vertices with the most betweenness_centrality (default 900 seconds).
+    
+    Returns
+    -------
+    tuple
+        A tuple with the format (number of centrality, vertices with the most betweenness_centrality, total time, time to finish).
+
+    """
+    betweenness_centrality = {}
+    max_centrality_vertices = []
+    number_of_vertices_analyzed = 0
+    total_time = 0
+    time_to_finish = 0
+    max_centrality = 0
+    start_time = time.time()
+    for vertex in graph.get_graph_elements():
+        if time.time() - start_time >= execution_time: break
+        number_of_vertices_analyzed += 1
+        separations = find_shortest_path_to_all_without_weights(graph, vertex)
+        for separation in separations.values():
+            if separation['distance'] == float('inf'): continue
+            for vertex_in_path in separation['path']:
+                if vertex_in_path == vertex: continue
+                if vertex_in_path not in betweenness_centrality: betweenness_centrality[vertex_in_path] = 1
+                else: betweenness_centrality[vertex_in_path] += 1
+    end_time = time.time()
+    total_time = len(graph.get_graph_elements())*((end_time - start_time)/number_of_vertices_analyzed)
+    time_to_finish = total_time - (end_time - start_time)
+    for vertex in betweenness_centrality:
+        if betweenness_centrality[vertex] > max_centrality:
+            max_centrality = betweenness_centrality[vertex]
+            max_centrality_vertices = []
+            max_centrality_vertices.append(vertex)
+        elif betweenness_centrality[vertex] == max_centrality:  max_centrality_vertices.append(vertex)
+    return max_centrality, max_centrality_vertices, total_time, time_to_finish
+    
+ 
 
 def main():
     movies_by_id, actors_by_movie, actor_names_by_id = read_data(MOVIES_DATA_PATH, ACTORS_DATA_PATH, ACTORS_NAMES_PATH)
     graph = load_graph(movies_by_id, actors_by_movie, actor_names_by_id)
-    # m = find_connected_components(graph)
-    # print(f"The number of connected components is {len(m)}")
-    # print(f"The largest connected component has {len(m['Component 1'])} vertices")
-    # print(f"The second largest connected component has {len(m['Component 2'])} vertices")
-    # print(f"The smallest connected components has {len(m[f'Component {len(m)}'])} vertices")
-    
-    
-    # print(len(m["Component 2"]))
-    # print(len(m[f"Component {len(m)}"]))
-    # coso = find_shortest_path_to_all(graph, 'nm7057284')
-    # print(coso['nm0179132'])
-    # coso1 = find_shortest_path_to_all_without_weights(graph, 'nm7057284')
-    # print(coso1['nm0179132'])
-    # print(find_shortest_path_between_vertices(graph, 'nm7057284', 'nm0888572'))
-    # print(average_separations(graph, 'Component 1', 50))
-    # print(find_diameter(graph, 'Component 1', 100))
-
-    # coso1 = find_shortest_path_to_all_without_weights(graph, 'nm11549950')
-    # print(coso1['nm8311374'])
+    m = find_connected_components(graph)
+    print(f"The number of connected components is {len(m)}")
+    print(f"The largest connected component has {len(m['Component 1'])} vertices")
+    print(f"The second largest connected component has {len(m['Component 2'])} vertices")
+    print(f"The smallest connected components has {len(m[f'Component {len(m)}'])} vertices")
+    print("Shortest path calculation example (with weights)")
+    path_calculation = find_shortest_path_to_all(graph, 'nm0000102')
+    print(f"The path from {actor_names_by_id['nm0000102']} to {actor_names_by_id['nm0000108']} has distance {path_calculation['nm0000108']['distance']} and is {path_calculation['nm0000108']['path']}")
+    print("Shortest path calculation example (without weights)")
+    path_calculation2 = find_shortest_path_to_all_without_weights(graph, 'nm0000102')
+    print(f"The path from {actor_names_by_id['nm0000102']} to {actor_names_by_id['nm0201857']} has distance {path_calculation2['nm0201857']['distance']} and is {path_calculation2['nm0201857']['path']}")
+    print("Example of finding the shortest path between 2 vertices")
+    path_calculation3 = find_shortest_path_between_vertices(graph, 'nm0000102', 'nm0000108')
+    print(f"The path from {actor_names_by_id['nm0000102']} to {actor_names_by_id['nm0000108']} has distance {path_calculation3[0]} and is {path_calculation3[1]}")
+    print(f"The time it takes is {path_calculation3[2]} seconds")
+    print("Example of calculation of the diameter of the largest connected component")
+    diameter = find_diameter(graph, "Component 1", 20)
+    print(f"The diameter of the largest connected component is {diameter[0]}")
+    print(f"The time it takes is {diameter[1]} seconds")
+    print(f"The time it takes to finish is {diameter[2]} seconds")
+    print("Example of calculation of the average distance of the largest connected component")   
+    average_distance = average_separations(graph, "Component 1", 20) 
+    print(f"The average distance of the largest connected component is {average_distance[1]}")
+    print(f"The time it takes is {average_distance[2]} seconds")
+    print(f"The time it takes to finish is {average_distance[3]} seconds")
+    print("Example of calculation of the betweenness centrality of the largest connected component")
+    centrality = betweenness_centrality(graph, 20)
+    print(f"The betweenness centrality of the largest connected component is {centrality[0]}")
+    print(f"The vertices with the most betweenness centrality are {centrality[1]}")
+    print(f"The time it takes is {centrality[2]} seconds")
+    print(f"The time it takes to finish is {centrality[3]} seconds")
 
 
 if __name__ == '__main__':
